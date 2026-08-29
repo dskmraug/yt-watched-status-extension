@@ -29,6 +29,20 @@
     </div>
   </form>
 
+  <hr />
+
+  <h1>視聴状態のエクスポート・インポート</h1>
+  <p class="description">
+    視聴済み/未視聴のデータをJSONファイルとして書き出し、別のPC・別のChromeプロファイルに取り込めます。
+  </p>
+
+  <div class="actions">
+    <button type="button" id="export-btn">エクスポート</button>
+    <button type="button" id="import-btn">インポート</button>
+    <input type="file" id="import-file-input" accept="application/json" hidden />
+  </div>
+  <p id="import-status" class="save-status"></p>
+
   <script src="../shared/constants.js"></script>
   <script src="../shared/storage.js"></script>
   <script src="options.js"></script>
