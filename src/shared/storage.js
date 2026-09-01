@@ -165,4 +165,4 @@
     videoIdFromKey,
     keyFor,
   };
-})((window.__ytWatch = window.__ytWatch || {}));
+})((globalThis.__ytWatch = globalThis.__ytWatch || {}));
