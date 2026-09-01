@@ -1,6 +1,8 @@
 // 共通定数
-// content-script / options ページの双方から <script> タグで直接読み込む前提のため、
-// ES modules の import/export は使わず window.__ytWatch 名前空間に載せる。
+// content-script / options ページ / background service worker のいずれからも
+// <script> タグ(またはservice workerではimportScripts)で直接読み込む前提のため、
+// ES modules の import/export は使わず globalThis.__ytWatch 名前空間に載せる。
+// (service workerには window が存在しないため globalThis を使う。ブラウザ環境では window === globalThis)
 (function (ns) {
   // 視聴状態を保存する際のキー接頭辞。実際のキーは `watch:<videoId>` になる
   ns.STORAGE_PREFIX = "watch:";
@@ -32,4 +34,17 @@
 
   ns.BADGE_ATTR = "data-watch-badge-applied";
   ns.BUTTON_ID = "yt-watch-toggle-button";
-})((window.__ytWatch = window.__ytWatch || {}));
+
+  // 複数端末間の自動同期(chrome.storage.sync)用の設定。
+  // 動画1本=1アイテムだと512アイテム上限にすぐ達するため、
+  // 複数の動画IDを1アイテム(バケット)にまとめて格納する。
+  // バケットの割り当てはvideoIdのハッシュ値で決まる(ハッシュバケット方式)。
+  ns.SYNC_BUCKET_PREFIX = "wb:"; // watched bucket
+  ns.SYNC_BUCKET_COUNT = 64;
+  // 1エントリは "videoId(11文字) + updatedAt(epoch秒をbase36で7桁固定)" の
+  // 区切り文字なし固定長(18文字)で連結して1バケットの文字列を構成する。
+  // 視聴済みの動画のみを保存し、未視聴はエントリ自体を持たないことで表現する。
+  ns.SYNC_VIDEO_ID_LENGTH = 11;
+  ns.SYNC_TIMESTAMP_LENGTH = 7;
+  ns.SYNC_TIMESTAMP_RADIX = 36;
+})((globalThis.__ytWatch = globalThis.__ytWatch || {}));

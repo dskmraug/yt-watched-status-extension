@@ -1,10 +1,13 @@
 {
   "manifest_version": 3,
   "name": "YouTube 視聴済み管理",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "YouTubeの動画サムネイルに視聴済み/未視聴バッジを表示し、動画ページのボタンや自動判定で視聴状態を管理します。",
   "permissions": ["storage"],
   "host_permissions": ["https://www.youtube.com/*"],
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
   "options_page": "src/options/options.html",
   "content_scripts": [
     {
