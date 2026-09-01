@@ -41,10 +41,14 @@
   // バケットの割り当てはvideoIdのハッシュ値で決まる(ハッシュバケット方式)。
   ns.SYNC_BUCKET_PREFIX = "wb:"; // watched bucket
   ns.SYNC_BUCKET_COUNT = 64;
-  // 1エントリは "videoId(11文字) + updatedAt(epoch秒をbase36で7桁固定)" の
-  // 区切り文字なし固定長(18文字)で連結して1バケットの文字列を構成する。
+  // 1エントリは "videoId(11文字) + updatedAt(epoch秒をbase64で6桁固定)" の
+  // 区切り文字なし固定長(17文字)で連結して1バケットの文字列を構成する。
   // 視聴済みの動画のみを保存し、未視聴はエントリ自体を持たないことで表現する。
+  // updatedAtのbase64は videoId と同じ文字種(64種類)を使う独自エンコードで、
+  // JS標準の Number#toString(radix) は radix<=36 までしか対応していないため
+  // syncStorage.js 側で専用のエンコード/デコード関数を実装している。
+  // 64^6(≒687億秒 ≒ 約2,178年分)をカバーできるため実用上ほぼ無期限。
   ns.SYNC_VIDEO_ID_LENGTH = 11;
-  ns.SYNC_TIMESTAMP_LENGTH = 7;
-  ns.SYNC_TIMESTAMP_RADIX = 36;
+  ns.SYNC_TIMESTAMP_LENGTH = 6;
+  ns.SYNC_TIMESTAMP_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 })((globalThis.__ytWatch = globalThis.__ytWatch || {}));

@@ -4,8 +4,10 @@
 // 設計:
 // - 動画1本=1アイテムだと512アイテム上限にすぐ達するため、videoIdのハッシュ値で
 //   バケット(SYNC_BUCKET_COUNT個)に振り分け、1バケット=複数動画IDを保存する。
-// - 各バケットの値は "videoId(11文字)+updatedAt(epoch秒をbase36で7桁固定)" を
-//   区切り文字なしで連結した固定長(18文字/件)の文字列。
+// - 各バケットの値は "videoId(11文字)+updatedAt(epoch秒をbase64で6桁固定)" を
+//   区切り文字なしで連結した固定長(17文字/件)の文字列。base64はvideoIdと同じ
+//   64種類の文字を使う独自エンコード(JS標準のNumber#toString(radix)はradix<=36
+//   までしか対応していないため専用の変換関数を用意している)。
 // - 「視聴済みの動画のみ」を保存し、未視聴はエントリを持たないことで表現する
 //   (存在しない=未視聴)。
 // - chrome.storage.sync はアイテム単位で同期されるため、複数端末が同じバケットを
@@ -18,7 +20,8 @@
   const BUCKET_COUNT = ns.SYNC_BUCKET_COUNT;
   const VIDEO_ID_LENGTH = ns.SYNC_VIDEO_ID_LENGTH;
   const TIMESTAMP_LENGTH = ns.SYNC_TIMESTAMP_LENGTH;
-  const TIMESTAMP_RADIX = ns.SYNC_TIMESTAMP_RADIX;
+  const TIMESTAMP_ALPHABET = ns.SYNC_TIMESTAMP_ALPHABET;
+  const TIMESTAMP_BASE = TIMESTAMP_ALPHABET.length;
   const ENTRY_LENGTH = VIDEO_ID_LENGTH + TIMESTAMP_LENGTH;
   const MAX_WRITE_ATTEMPTS = 3;
 
@@ -44,6 +47,28 @@
     return typeof key === "string" && key.indexOf(BUCKET_PREFIX) === 0;
   }
 
+  // epoch秒 -> TIMESTAMP_ALPHABET(64種類)によるTIMESTAMP_LENGTH桁固定文字列
+  function encodeTimestamp(sec) {
+    let n = sec;
+    let out = "";
+    for (let i = 0; i < TIMESTAMP_LENGTH; i++) {
+      out = TIMESTAMP_ALPHABET[n % TIMESTAMP_BASE] + out;
+      n = Math.floor(n / TIMESTAMP_BASE);
+    }
+    return out;
+  }
+
+  // TIMESTAMP_ALPHABET文字列 -> epoch秒(不正な文字が含まれる場合はNaN)
+  function decodeTimestamp(str) {
+    let n = 0;
+    for (let i = 0; i < str.length; i++) {
+      const digit = TIMESTAMP_ALPHABET.indexOf(str[i]);
+      if (digit < 0) return NaN;
+      n = n * TIMESTAMP_BASE + digit;
+    }
+    return n;
+  }
+
   // バケット文字列 -> Map<videoId, updatedAtSec>
   function decodeBucket(raw) {
     const map = new Map();
@@ -51,7 +76,7 @@
     for (let i = 0; i + ENTRY_LENGTH <= raw.length; i += ENTRY_LENGTH) {
       const chunk = raw.slice(i, i + ENTRY_LENGTH);
       const videoId = chunk.slice(0, VIDEO_ID_LENGTH);
-      const ts = parseInt(chunk.slice(VIDEO_ID_LENGTH), TIMESTAMP_RADIX);
+      const ts = decodeTimestamp(chunk.slice(VIDEO_ID_LENGTH));
       if (videoId && Number.isFinite(ts)) {
         map.set(videoId, ts);
       }
@@ -62,9 +87,7 @@
   // Map<videoId, updatedAtSec> -> バケット文字列
   function encodeBucket(map) {
     const ids = Array.from(map.keys()).sort();
-    return ids
-      .map((id) => id + map.get(id).toString(TIMESTAMP_RADIX).padStart(TIMESTAMP_LENGTH, "0"))
-      .join("");
+    return ids.map((id) => id + encodeTimestamp(map.get(id))).join("");
   }
 
   function getBucketRaw(bucketKey) {
