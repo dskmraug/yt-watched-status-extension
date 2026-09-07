@@ -198,7 +198,7 @@
         local &&
         local.status === "watched" &&
         typeof oldTs === "number" &&
-        localUpdatedAt <= oldTs * 1000
+        Math.floor(localUpdatedAt / 1000) <= oldTs
       ) {
         // リモートでエントリが削除された(未視聴に戻された)。
         // ローカルがそれより新しい独自の変更を持っていない場合のみ追従する
@@ -247,7 +247,13 @@
         }
       } else if (localUpdatedAt > remoteUpdatedAt) {
         if (localWatched !== remoteWatched) {
-          await pushWatchState(videoId, localWatched, localUpdatedAt);
+          if (localWatched && !remoteWatched && local && local.source === "synced") {
+            // ローカルが他端末から同期したエントリで、リモートに存在しない場合は
+            // 他端末が未視聴に戻したと判断してローカルも追従する(再プッシュを防ぐ)
+            await applyRemoteToLocal(videoId, false, Math.floor(Date.now() / 1000));
+          } else {
+            await pushWatchState(videoId, localWatched, localUpdatedAt);
+          }
         }
       }
     }
