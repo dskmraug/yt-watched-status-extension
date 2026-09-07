@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube 視聴済み管理",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwruqPklbLl892M/6MfVIFbO3CFfG/zJiHBFepfBgkeDshmOpNpIZt8CM3gT7kYExpLgUTf9/HUXfdgibNuFp1cnR4TTouiJzffv9cf8AMwM/2ys6pan4vd8eW6q4KgcxaeYzabJlLOL93G4U6pWmLIQsVbubTnBS4iBY4NfQVeqiIGQktSl7Rmnwcw0qsseMxKzZn4NpBYjs0l/tj0nXe1bTsRIOwDvCqiDW6YBuLaFUp/9WDT67VIW/ZO60EtLGNDd6kQE6VngXfPVXz40FOimgGjObinSwVtFZLB8zgaO+xm7QEV2nioqpI5tF3RHG67sofz+sfcYA3RN2eXBexwIDAQAB",
   "version": "0.2.0",
   "description": "YouTubeの動画サムネイルに視聴済み/未視聴バッジを表示し、動画ページのボタンや自動判定で視聴状態を管理します。",
   "permissions": ["storage"],
